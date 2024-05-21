@@ -47,7 +47,6 @@ function useFetchCrypto(cryptoName){
             .then(data => {
                 setLoading(false);
                 setError(null);
-                console.log("DEBUG: ",[cryptoName, data.rates[cryptoName]] )
                 setData([cryptoName, data.rates[cryptoName]]);
             })
             .catch(err=>{

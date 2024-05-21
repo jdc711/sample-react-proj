@@ -6,6 +6,16 @@ import FilterCrypto from "./FilterCrypto";
 import useFetchCrypto from "../hooks/useFetchCrypto";
 import "../styles/home.css"
 import useFetchUpdateAllSerially from "../hooks/useFetchUpdateAllSerially";
+import ProfileDetails from "./ProfileDetails";
+import Popup from "./Popup";
+import BuyCrypto from "./BuyCrypto";
+
+function fetchPersonalData(){
+    return {
+        name: "Joshua Choe",
+        funds: 100
+    }
+}
 
 function mockFetch(name){
 
@@ -43,6 +53,11 @@ function Home(){
     useEffect(()=>{
         setCryptos(data);
     }, [data]);
+
+    // INITIAL FETCH USER DATA (name, funds)
+    let userData = fetchPersonalData();
+    const [name, setName] = useState(userData.name);
+    const [funds, setFunds] = useState(userData.funds);
 
     // PAGINATION
     const [currentPage, setCurrentPage] = useState(1);
@@ -106,13 +121,44 @@ function Home(){
         })
         .catch(err=>setErrorUpdatingAllConcurrently(err))
         setUpdatingAllConcurrently(false);
-
     }
 
+    // BUYING CRYPTO & POPUP
+    const [cryptoNameToBuy, setCryptoNameToBuy] = useState(null);
+    const [priceOfCryptoToBuy, setPriceOfCryptoToBuy] = useState(0);
+    const [showPopup, setShowPopup] = useState(false);
+    const [cryptosBought, setCryptosBought] = useState([]);
+    const closePopup = () => setShowPopup(false);
+    function requestBuyCrypto(cryptoToBuy){
+        setCryptoNameToBuy(cryptoToBuy);
+        let price;
+        for (let crypto of cryptos){
+            if (crypto[0] === cryptoToBuy){
+                price = crypto[1];
+                break;
+            }
+        }
+        setPriceOfCryptoToBuy(price);
+        setShowPopup(true);
+    }
+
+    function buyCrypto(numberToBuy){
+        console.log("funds: ", funds, "(numberToBuy * priceOfCryptoToBuy): ", (numberToBuy * priceOfCryptoToBuy))
+
+        setFunds(prev=> prev-(numberToBuy * priceOfCryptoToBuy));
+        setCryptosBought(prev=>[...prev, {cryptoNameToBuy, numberToBuy}]);
+        setCryptoNameToBuy(null);
+        setShowPopup(false);
+        setPriceOfCryptoToBuy(0);
+        console.log("cryptosBought: ", cryptosBought);
+    }
+
+  
     return (
         <div className="home-container">
+            <ProfileDetails name={name} funds={funds}/>
             <FilterCrypto changeFilterTerm={term=>setFilterTerm(term)} />
-            {loading ? "CryptoListLoading" : error ? "Error fetching cryptolist" : <CryptoList cryptos={currentPageData} updateCrypto={updateCrypto} updateAllSerially={updateAllSerially} updateAllConcurrently={updateAllConcurrently}/>}
+            {loading ? "CryptoListLoading" : error ? "Error fetching cryptolist" : <CryptoList cryptos={currentPageData} updateCrypto={updateCrypto} updateAllSerially={updateAllSerially} updateAllConcurrently={updateAllConcurrently} buyCrypto={requestBuyCrypto}/>}
             {updating && <p>Updating list</p>}
             {updatingError && <p>Error updating list</p>}
 
@@ -122,6 +168,9 @@ function Home(){
             {updatingAllConcurrently && <p>Updating all concurrently</p>}
             {errorUpdatingAllConcurrently && <p>Error updating all conncurrently: {errorUpdatingAllConcurrently}</p>}
             <Pagination setCurrentPage={changeCurrentPage} currentPage={currentPage} totalItems={filteredData.length} itemsPerPage={itemsPerPage} />
+            <Popup isOpen={showPopup} onClose={closePopup}>
+                <BuyCrypto cryptoToBuy={cryptoNameToBuy} onBuy={buyCrypto} funds={funds} cryptoPrice={priceOfCryptoToBuy} />
+            </Popup>
         </div>
         
     )

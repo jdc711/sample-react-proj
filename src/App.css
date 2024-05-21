@@ -1,7 +1,14 @@
 .App {
-  text-align: center;
+  /* text-align: center; */
 }
 
+.App .nav-bar{
+  margin-bottom: 10px;
+}
+
+.App a{
+  margin: 10px;
+}
 .App-logo {
   height: 40vmin;
   pointer-events: none;
